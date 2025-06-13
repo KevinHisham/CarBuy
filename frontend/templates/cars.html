@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cars - CarBuy</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2><i class="fas fa-car"></i> CarBuy</h2>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="{{ url_for('index') }}" class="nav-link">Home</a></li>
+                <li><a href="{{ url_for('cars') }}" class="nav-link active">Cars</a></li>
+                <li><a href="{{ url_for('cart') }}" class="nav-link">
+                    <i class="fas fa-shopping-cart"></i> Cart
+                    <span id="cart-count" class="cart-count">0</span>
+                </a></li>
+                {% if session.user_id %}
+                    <li><a href="{{ url_for('orders') }}" class="nav-link">Orders</a></li>
+                    <li><span class="nav-link">Hi, {{ session.user_name }}</span></li>
+                    <li><a href="{{ url_for('logout') }}" class="nav-link">Logout</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('login') }}" class="nav-link">Login</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <section class="page-header">
+        <div class="container">
+            <h1>Browse Cars</h1>
+            <p>Find the perfect car for you</p>
+        </div>
+    </section>
+
+    <!-- Filters -->
+    <section class="filters">
+        <div class="container">
+            <form method="GET" class="filter-form">
+                <div class="filter-group">
+                    <label for="brand">Brand:</label>
+                    <select name="brand" id="brand">
+                        <option value="">All Brands</option>
+                        <option value="Toyota" {% if request.args.get('brand') == 'Toyota' %}selected{% endif %}>Toyota</option>
+                        <option value="Honda" {% if request.args.get('brand') == 'Honda' %}selected{% endif %}>Honda</option>
+                        <option value="Mitsubishi" {% if request.args.get('brand') == 'Mitsubishi' %}selected{% endif %}>Mitsubishi</option>
+                        <option value="Daihatsu" {% if request.args.get('brand') == 'Daihatsu' %}selected{% endif %}>Daihatsu</option>
+                        <option value="Suzuki" {% if request.args.get('brand') == 'Suzuki' %}selected{% endif %}>Suzuki</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="category">Category:</label>
+                    <select name="category" id="category">
+                        <option value="">All Categories</option>
+                        <option value="Sedan" {% if request.args.get('category') == 'Sedan' %}selected{% endif %}>Sedan</option>
+                        <option value="SUV" {% if request.args.get('category') == 'SUV' %}selected{% endif %}>SUV</option>
+                        <option value="MPV" {% if request.args.get('category') == 'MPV' %}selected{% endif %}>MPV</option>
+                        <option value="Hatchback" {% if request.args.get('category') == 'Hatchback' %}selected{% endif %}>Hatchback</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="min_price">Min Price:</label>
+                    <input type="number" name="min_price" id="min_price" placeholder="Min Price" value="{{ request.args.get('min_price', '') }}">
+                </div>
+                
+                <div class="filter-group">
+                    <label for="max_price">Max Price:</label>
+                    <input type="number" name="max_price" id="max_price" placeholder="Max Price" value="{{ request.args.get('max_price', '') }}">
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Filter</button>
+                <a href="{{ url_for('cars') }}" class="btn btn-secondary">Clear</a>
+            </form>
+        </div>
+    </section>
+
+    <!-- Cars Grid -->
+    <section class="cars-listing">
+        <div class="container">
+            <div class="cars-grid">
+                {% for car in cars %}
+                <div class="car-card">
+                    <div class="car-image">
+                        {% if car.imageUrl %}
+                            <img src="{{ car.imageUrl }}" alt="{{ car.brand }} {{ car.model }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        {% endif %}
+                        <div class="car-placeholder" {% if car.imageUrl %}style="display:none"{% endif %}>
+                            <i class="fas fa-car"></i>
+                        </div>
+                        <div class="car-badge">{{ car.category }}</div>
+                        {% if not car.isAvailable %}
+                        <div class="car-unavailable">Sold Out</div>
+                        {% endif %}
+                    </div>
+                    <div class="car-info">
+                        <h3>{{ car.brand }} {{ car.model }}</h3>
+                        <p class="car-year">{{ car.year }}</p>
+                        <p class="car-description">{{ car.description[:50] }}{% if car.description|length > 50 %}...{% endif %}</p>
+                        <div class="car-specs">
+                            <span><i class="fas fa-cog"></i> {{ car.transmission }}</span>
+                            <span><i class="fas fa-gas-pump"></i> {{ car.fuelType }}</span>
+                            <span><i class="fas fa-palette"></i> {{ car.color }}</span>
+                            {% if car.mileage %}
+                            <span><i class="fas fa-tachometer-alt"></i> {{ "{:,}".format(car.mileage) }} km</span>
+                            {% endif %}
+                        </div>
+                        <div class="car-footer">
+                            <span class="car-price">Rp {{ "{:,.0f}".format(car.price) }}</span>
+                            {% if car.isAvailable %}
+                            <button class="btn btn-secondary btn-sm add-to-cart" data-car-id="{{ car.id }}">
+                                <i class="fas fa-cart-plus"></i> Add to Cart
+                            </button>
+                            {% else %}
+                            <button class="btn btn-disabled btn-sm" disabled>
+                                <i class="fas fa-ban"></i> Unavailable
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            {% if not cars %}
+            <div class="no-cars">
+                <i class="fas fa-search"></i>
+                <h3>No cars found</h3>
+                <p>Try adjusting your search criteria</p>
+            </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <script>
+        // Update cart count from localStorage (if used)
+        document.addEventListener('DOMContentLoaded', function() {
+            const cartCount = localStorage.getItem('cartCount') || 0;
+            document.getElementById('cart-count').textContent = cartCount;
+        });
+
+        // Add to Cart button handler (example, adjust as needed)
+        document.querySelectorAll('.add-to-cart').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const carId = this.getAttribute('data-car-id');
+                // Implement your add-to-cart logic here (AJAX or form submit)
+                alert('Added car ID ' + carId + ' to cart!');
+            });
+        });
+    </script>
+</body>
+</html>
