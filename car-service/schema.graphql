@@ -1,0 +1,71 @@
+type Car {
+    id: ID!
+    brand: String!
+    model: String!
+    year: Int!
+    price: Float!
+    description: String
+    imageUrl: String
+    category: String!
+    transmission: String!
+    fuelType: String!
+    mileage: Int
+    color: String!
+    isAvailable: Boolean!
+    createdAt: String!
+    updatedAt: String!
+}
+
+input CarInput {
+    brand: String!
+    model: String!
+    year: Int!
+    price: Float!
+    description: String
+    imageUrl: String
+    category: String!
+    transmission: String!
+    fuelType: String!
+    mileage: Int
+    color: String!
+}
+
+input UpdateCarInput {
+    brand: String
+    model: String
+    year: Int
+    price: Float
+    description: String
+    imageUrl: String
+    category: String
+    transmission: String
+    fuelType: String
+    mileage: Int
+    color: String
+    isAvailable: Boolean
+}
+
+input CarFilter {
+    brand: String
+    category: String
+    minPrice: Float
+    maxPrice: Float
+    transmission: String
+    fuelType: String
+    isAvailable: Boolean
+}
+
+type Query {
+    cars(filter: CarFilter): [Car!]!
+    car(id: ID!): Car
+    availableCars: [Car!]!
+    carsByCategory(category: String!): [Car!]!
+    searchCars(query: String!): [Car!]!
+}
+
+type Mutation {
+    createCar(input: CarInput!): Car!
+    updateCar(id: ID!, input: UpdateCarInput!): Car!
+    deleteCar(id: ID!): Boolean!
+    toggleCarAvailability(id: ID!): Car!
+}

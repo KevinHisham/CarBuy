@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - CarBuy</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2><i class="fas fa-car"></i> CarBuy</h2>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="{{ url_for('index') }}" class="nav-link">Home</a></li>
+                <li><a href="{{ url_for('cars') }}" class="nav-link">Cars</a></li>
+                <li><a href="{{ url_for('cart') }}" class="nav-link">
+                    <i class="fas fa-shopping-cart"></i> Cart
+                    <span id="cart-count" class="cart-count">0</span>
+                </a></li>
+                {% if session.user_id %}
+                    <li><a href="{{ url_for('orders') }}" class="nav-link active">Orders</a></li>
+                    <li><span class="nav-link">Hi, {{ session.user_name }}</span></li>
+                    <li><a href="{{ url_for('logout') }}" class="nav-link">Logout</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('login') }}" class="nav-link">Login</a></li>
+                {% endif %}
+            </ul>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Orders Content -->
+    <div class="orders-container">
+        <div class="container">
+            <h1 class="section-title">My Orders</h1>
+            
+            {% if orders %}
+                {% for order in orders %}
+                <div class="order-card">
+                    <div class="order-header">
+                        <div class="order-id">
+                            <i class="fas fa-receipt"></i>
+                            Order #{{ order.id }}
+                        </div>
+                        <div class="order-date">
+                            <i class="fas fa-calendar"></i>
+                            {{ order.createdAt.strftime('%B %d, %Y') if order.createdAt else 'N/A' }}
+                        </div>
+                        <div class="order-status status-{{ order.status.lower() if order.status else 'pending' }}">
+                            {% if order.status %}
+                                {{ order.status }}
+                            {% else %}
+                                Pending
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="order-items">
+                        <h4 style="margin-bottom: 1rem; color: #2c3e50;">
+                            <i class="fas fa-list"></i> Items Ordered
+                        </h4>
+                        {% if order.items %}
+                            {% for item in order.items %}
+                            <div class="order-item">
+                                <div class="order-item-info">
+                                    <span class="order-item-name">
+                                        {% if item.car %}
+                                            {{ item.car.brand }} {{ item.car.model }} ({{ item.car.year }})
+                                        {% else %}
+                                            Car ID: {{ item.carId }}
+                                        {% endif %}
+                                    </span>
+                                    <span class="order-item-quantity">Qty: {{ item.quantity }}</span>
+                                </div>
+                                <div class="order-item-price">
+                                    {% if item.car %}
+                                        Rp {{ "{:,.0f}".format(item.car.price * item.quantity) }}
+                                    {% else %}
+                                        Price not available
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p style="color: #7f8c8d; font-style: italic;">No items found for this order</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="order-total">
+                        Total: 
+                        {% if order.total %}
+                            Rp {{ "{:,.0f}".format(order.total) }}
+                        {% elif order.items %}
+                            {% set total = order.items | sum(attribute='car.price', start=0) %}
+                            Rp {{ "{:,.0f}".format(total) }}
+                        {% else %}
+                            Not available
+                        {% endif %}
+                    </div>
+                    
+                    <div class="order-actions" style="margin-top: 1.5rem; display: flex; gap: 1rem; justify-content: flex-end;">
+                        <button class="btn btn-secondary btn-sm" onclick="viewOrderDetails( order.id )">
+                            <i class="fas fa-eye"></i> View Details
+                        </button>
+                        {% if order.status and order.status.lower() == 'pending' %}
+                            <button class="btn btn-danger btn-sm" onclick="cancelOrder( order.id )">
+                                <i class="fas fa-times"></i> Cancel Order
+                            </button>
+                        {% endif %}
+                        {% if order.status and order.status.lower() == 'delivered' %}
+                            <button class="btn btn-primary btn-sm" onclick="reorder( order.id )">
+                                <i class="fas fa-redo"></i> Reorder
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+                
+                <!-- Pagination (if needed) -->
+                <div style="text-align: center; margin-top: 2rem;">
+                    <a href="{{ url_for('cars') }}" class="btn btn-primary">
+                        <i class="fas fa-car"></i> Continue Shopping
+                    </a>
+                </div>
+            {% else %}
+                <div class="no-orders">
+                    <i class="fas fa-clipboard-list"></i>
+                    <p>You haven't placed any orders yet</p>
+                    <a href="{{ url_for('cars') }}" class="btn btn-primary">
+                        <i class="fas fa-car"></i> Browse Cars
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div>
+                    <h3><i class="fas fa-car"></i> CarBuy</h3>
+                    <p>Your trusted car marketplace</p>
+                </div>
+                <div>
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="{{ url_for('index') }}">Home</a></li>
+                        <li><a href="{{ url_for('cars') }}">Cars</a></li>
+                        <li><a href="{{ url_for('cart') }}">Cart</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Contact</h4>
+                    <p><i class="fas fa-envelope"></i> info@carbuy.com</p>
+                    <p><i class="fas fa-phone"></i> +62 812 3456 7890</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 CarBuy. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Orders-specific JavaScript functions
+        function viewOrderDetails(orderId) {
+            // You can implement a modal or redirect to a detailed order page
+            alert(`View details for Order #${orderId}`);
+            // Example: window.location.href = `/order/${orderId}`;
+        }
+
+        function cancelOrder(orderId) {
+            if (confirm('Are you sure you want to cancel this order?')) {
+                fetch('/api/cancel_order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        order_id: orderId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Order cancelled successfully');
+                        location.reload();
+                    } else {
+                        alert('Error cancelling order: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error cancelling order');
+                });
+            }
+        }
+
+        function reorder(orderId) {
+            if (confirm('Add all items from this order to your cart?')) {
+                fetch('/api/reorder', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        order_id: orderId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Items added to cart successfully');
+                        window.location.href = '{{ url_for("cart") }}';
+                    } else {
+                        alert('Error adding items to cart: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error processing reorder');
+                });
+            }
+        }
+
+        // Update cart count on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCartCount();
+        });
+
+        function updateCartCount() {
+            fetch('/api/cart_count')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('cart-count').textContent = data.count || 0;
+                })
+                .catch(error => {
+                    console.error('Error updating cart count:', error);
+                });
+        }
+    </script>
+</body>
+</html>

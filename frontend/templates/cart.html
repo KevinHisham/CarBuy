@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart - CarBuy</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <h2><i class="fas fa-car"></i> CarBuy</h2>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="{{ url_for('index') }}" class="nav-link">Home</a></li>
+                <li><a href="{{ url_for('cars') }}" class="nav-link">Cars</a></li>
+                <li><a href="{{ url_for('cart') }}" class="nav-link active">
+                    <i class="fas fa-shopping-cart"></i> Cart
+                    <span id="cart-count" class="cart-count">{{ cart_items|length }}</span>
+                </a></li>
+                {% if session.user_id %}
+                    <li><a href="{{ url_for('orders') }}" class="nav-link">Orders</a></li>
+                    <li><span class="nav-link">Hi, {{ session.user_name }}</span></li>
+                    <li><a href="{{ url_for('logout') }}" class="nav-link">Logout</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('login') }}" class="nav-link">Login</a></li>
+                {% endif %}
+            </ul>
+            <div class="hamburger">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Cart Content -->
+    <div class="cart-container">
+        <div class="container">
+            <h1 class="section-title">Shopping Cart</h1>
+            
+            {% if cart_items %}
+                <div class="cart-items">
+                    {% for item in cart_items %}
+                    <div class="cart-item" data-car-id="{{ item.car_id }}">
+                        <div class="cart-item-image">
+                            {% if item.image %}
+                                <img src="{{ item.image }}" alt="{{ item.name }}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            {% endif %}
+                            <div class="cart-item-placeholder" {% if item.image %}style="display:none"{% endif %}>
+                                <i class="fas fa-car"></i>
+                            </div>
+                        </div>
+                        <div class="cart-item-info">
+                            <h4>{{ item.name }}</h4>
+                            <p class="cart-item-price">Rp {{ "{:,.0f}".format(item.price) }}</p>
+                        </div>
+                        <div class="quantity-controls">
+                            <button class="quantity-btn" onclick="updateQuantity( item.car_id, -1)">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" class="quantity-input" value="{{ item.quantity }}" min="1" 
+                                   onchange="setQuantity( item.car_id , this.value)">
+                            <button class="quantity-btn" onclick="updateQuantity( item.car_id , 1)">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div class="cart-item-total">
+                            <strong>Rp {{ "{:,.0f}".format(item.price * item.quantity) }}</strong>
+                        </div>
+                        <div class="cart-item-actions">
+                            <button class="btn btn-danger btn-sm" onclick="removeFromCart( item.car_id)">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="cart-summary">
+                    <div class="cart-total">
+                        <span>Total: </span>
+                        <span id="cart-total">Rp {{ "{:,.0f}".format(total) }}</span>
+                    </div>
+                    
+                    {% if session.user_id %}
+                        <button class="btn btn-success" onclick="checkout()" style="width: 100%; font-size: 1.2rem; padding: 15px;">
+                            <i class="fas fa-credit-card"></i> Proceed to Checkout
+                        </button>
+                    {% else %}
+                        <div style="text-align: center; margin-bottom: 1rem;">
+                            <p style="color: #7f8c8d; margin-bottom: 1rem;">Please login to proceed with checkout</p>
+                            <a href="{{ url_for('login') }}" class="btn btn-primary" style="width: 100%; font-size: 1.2rem; padding: 15px;">
+                                <i class="fas fa-sign-in-alt"></i> Login to Checkout
+                            </a>
+                        </div>
+                    {% endif %}
+                    
+                    <div style="text-align: center; margin-top: 1rem;">
+                        <a href="{{ url_for('cars') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Continue Shopping
+                        </a>
+                    </div>
+                </div>
+            {% else %}
+                <div class="empty-cart">
+                    <i class="fas fa-shopping-cart"></i>
+                    <p>Your cart is empty</p>
+                    <a href="{{ url_for('cars') }}" class="btn btn-primary">
+                        <i class="fas fa-car"></i> Browse Cars
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div>
+                    <h3><i class="fas fa-car"></i> CarBuy</h3>
+                    <p>Your trusted car marketplace</p>
+                </div>
+                <div>
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="{{ url_for('index') }}">Home</a></li>
+                        <li><a href="{{ url_for('cars') }}">Cars</a></li>
+                        <li><a href="{{ url_for('cart') }}">Cart</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>Contact</h4>
+                    <p><i class="fas fa-envelope"></i> info@carbuy.com</p>
+                    <p><i class="fas fa-phone"></i> +62 812 3456 7890</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 CarBuy. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        // Cart-specific JavaScript functions
+        function updateQuantity(carId, change) {
+            const quantityInput = document.querySelector(`[data-car-id="${carId}"] .quantity-input`);
+            let newQuantity = parseInt(quantityInput.value) + change;
+            if (newQuantity < 1) newQuantity = 1;
+            setQuantity(carId, newQuantity);
+        }
+
+        function setQuantity(carId, quantity) {
+            quantity = Math.max(1, parseInt(quantity));
+            
+            // Update UI immediately
+            const quantityInput = document.querySelector(`[data-car-id="${carId}"] .quantity-input`);
+            quantityInput.value = quantity;
+            
+            // Update cart via API (you'll need to implement this endpoint)
+            fetch('/api/update_cart_quantity', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    car_id: carId,
+                    quantity: quantity
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Refresh the page to update totals
+                    location.reload();
+                } else {
+                    alert('Error updating quantity: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error updating quantity');
+            });
+        }
+
+        function removeFromCart(carId) {
+            if (confirm('Are you sure you want to remove this item from your cart?')) {
+                fetch('/api/remove_from_cart', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        car_id: carId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error removing item: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error removing item');
+                });
+            }
+        }
+
+        function checkout() {
+            if (confirm('Proceed with checkout?')) {
+                fetch('/api/checkout', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Order placed successfully! Order ID: ' + data.order_id);
+                        window.location.href = '{{ url_for("orders") }}';
+                    } else {
+                        alert('Checkout failed: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Checkout failed');
+                });
+            }
+        }
+    </script>
+</body>
+</html>
