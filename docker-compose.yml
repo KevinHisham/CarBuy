@@ -34,3 +34,7 @@ services:
     volumes:
       - ./frontend:/app
     restart: unless-stopped
+    environment:
+      - CAR_SERVICE_URL=http://car-service:8002/graphql
+      - USER_SERVICE_URL=http://user-service:8001/graphql
+      - ORDER_SERVICE_URL=http://order-service:8003/graphql
